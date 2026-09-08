@@ -1,29 +1,41 @@
 const mysql = require('mysql2/promise');
+const fs = require('fs');
+const path = require('path');
+
 require('dotenv').config();
 
-const sslConfig = process.env.DB_SSL === 'true'
-  ? {
-      ...(process.env.DB_SSL_CA
-        ? { ca: process.env.DB_SSL_CA.replace(/\\n/g, '\n') }
-        : {}),
-      rejectUnauthorized: true,
-    }
-  : undefined;
+const caPath =
+  process.env.DB_SSL_CA_PATH ||
+  path.join(__dirname, '..', 'certs', 'Aiven.pem');
+
+const sslConfig =
+  process.env.DB_SSL === 'true'
+    ? {
+        ca: fs.readFileSync(caPath),
+        rejectUnauthorized: true,
+      }
+    : undefined;
 
 const baseConfig = {
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
   ...(sslConfig ? { ssl: sslConfig } : {}),
 };
 
 let pool;
 
 async function initializeDatabase() {
-  const connection = await mysql.createConnection(baseConfig);
-  const databaseName = process.env.DB_NAME || 'mayura_regalia';
-  await connection.query(`CREATE DATABASE IF NOT EXISTS \`${databaseName.replace(/`/g, '')}\``);
+  const databaseName = process.env.DB_NAME || 'defaultdb';
+
+  const connection = await mysql.createConnection({
+    ...baseConfig,
+    database: databaseName,
+  });
+
+  console.log('✅ Connected to Aiven MySQL with SSL');
+
   await connection.end();
 
   pool = mysql.createPool({
@@ -33,6 +45,8 @@ async function initializeDatabase() {
     connectionLimit: 10,
     queueLimit: 0,
   });
+
+  // your CREATE TABLE queries continue here...
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS admins (
@@ -69,8 +83,14 @@ async function initializeDatabase() {
 }
 
 function getPool() {
-  if (!pool) throw new Error('Database has not been initialized');
+  if (!pool) {
+    throw new Error('Database has not been initialized');
+  }
+
   return pool;
 }
 
-module.exports = { initializeDatabase, getPool };
+module.exports = {
+  initializeDatabase,
+  getPool,
+};

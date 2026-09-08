@@ -11,27 +11,44 @@ services:
     buildCommand: npm ci
     startCommand: npm start
     healthCheckPath: /api/health
+
     envVars:
       - key: NODE_ENV
         value: production
+
       - key: DB_HOST
         sync: false
+
       - key: DB_PORT
-        value: "3306"
+        value: "12669"
+
       - key: DB_USER
         sync: false
+
       - key: DB_PASSWORD
         sync: false
+
       - key: DB_NAME
-        sync: false
+        value: defaultdb
+
+      - key: DB_SSL
+        value: "true"
+
+      - key: DB_SSL_CA_PATH
+        value: /etc/secrets/Aiven.pem
+
       - key: JWT_SECRET
         generateValue: true
+
       - key: JWT_EXPIRES_IN
         value: 7d
+
       - key: ADMIN_EMAIL
         sync: false
+
       - key: ADMIN_PASSWORD
         sync: false
+
       - key: FRONTEND_URL
         sync: false
 
@@ -41,11 +58,11 @@ services:
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: ./build
+
     envVars:
-      # This is baked into the production React build. Enter the deployed API
-      # URL followed by /api, e.g. https://your-api.onrender.com/api.
       - key: REACT_APP_API_URL
         sync: false
+
     routes:
       - type: rewrite
         source: /*
