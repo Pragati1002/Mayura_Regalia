@@ -11,7 +11,12 @@ const { seedProducts } = require('./utils/seedProducts');
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
 
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }));
+const frontendOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean)
+  .map((value) => (/^https?:\/\//i.test(value) ? value : `https://${value}`).replace(/\/+$/, ''));
+app.use(cors({ origin: frontendOrigins }));
 app.use(express.json());
 
 app.get('/api/health', (req, res) => {

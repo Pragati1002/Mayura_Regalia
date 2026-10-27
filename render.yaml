@@ -50,7 +50,10 @@ services:
         sync: false
 
       - key: FRONTEND_URL
-        sync: false
+        fromService:
+          type: web
+          name: mayura-regalia-store
+          property: host
 
   - type: web
     name: mayura-regalia-store
@@ -61,7 +64,10 @@ services:
 
     envVars:
       - key: REACT_APP_API_URL
-        sync: false
+        fromService:
+          type: web
+          name: mayura-regalia-api
+          property: host
 
     routes:
       - type: rewrite
